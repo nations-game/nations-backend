@@ -1,0 +1,3 @@
+celery[async]
+flask[async]
+sqlalchemy[asyncio]
