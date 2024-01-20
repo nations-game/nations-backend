@@ -8,7 +8,7 @@ from .routes import (
 
 BLUEPRINTS: list = [
     user_endpoints,
-    
+    nation_endpoints
 ]
 
 class FlaskConfig:
@@ -23,7 +23,7 @@ class FlaskServer:
 
     def _register_blueprints(self):
         for blueprint in BLUEPRINTS:
-            self.app.register_blueprint(user_endpoints)
+            self.app.register_blueprint(blueprint)
     
     def run_app(self) -> None:
         self._register_blueprints()
