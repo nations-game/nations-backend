@@ -1,16 +1,16 @@
-from celery import Celery
+from flask_apscheduler import APScheduler
+from flask import Flask
 
+class TaskHandler:
+    def __init__(self, flask_app: Flask) -> None:
+        self.flask_app = flask_app
 
-class CeleryTasks(Celery):
-    def __init__(self, main: str, broker: str, database):
-        super().__init__(
-            main, 
-            broker=broker, 
-            task_always_eager=True
-        )
+        self.scheduler = APScheduler()
+        self.scheduler.init_app(self.flask_app)
 
-        self.database = database
-        
-        @self.task
-        async def give_income(self):
-            ...
+        # Example task
+        @self.scheduler.task("interval", id="do_test_task", seconds=30, misfire_grace_time=900)
+        def test_task():
+            print("test task executed")
+
+        self.scheduler.start()
