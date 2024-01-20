@@ -71,9 +71,7 @@ class Database:
         )
         try:
             self.session.add(nation)
-            await self.session.commit()
-            await self.session.refresh(nation)
-
+            await self.session.flush()
             user.nation_id = nation.id
             await self.session.commit()
         except IntegrityError as e:
