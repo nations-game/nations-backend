@@ -73,9 +73,6 @@ class Database:
             self.session.add(nation)
             await self.session.commit()
             await self.session.refresh(nation)
-
-            user.nation_id = nation.id
-            await self.session.commit()
         except IntegrityError as e:
             print(e)
             await self.session.rollback()
@@ -84,17 +81,11 @@ class Database:
                 return "There is already a nation with that name!"
             else:
                 return "Unknown database integrity error. Try again later."
-        return nation
-    
-    async def get_nation_by_id(self, nation_id: int) -> Nation:
-        try:
-            result = await self.session.execute(select(Nation).where(Nation.id == nation_id))
-            nation = result.scalar()
-            assert nation != None
-            return nation
-        except:
+        except Exception as ex:
+            print(ex)
             await self.session.rollback()
-        return None
+            return "Unknown error. Try again later."
+        return nation
     
     async def get_user_by_id(self, user_id: int) -> User:
         try:
