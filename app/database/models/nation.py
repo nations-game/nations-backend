@@ -12,7 +12,7 @@ nation_factory_association = Table(
     Base.metadata,
     Column("nation_id", Integer, ForeignKey("nations.id")),
     Column("factory_id", Integer, ForeignKey("factory_types.id")),
-    Column("quantity", Integer, default=0),
+    Column("quantity", Integer, default=1),
 )
 
 @dataclass
@@ -28,12 +28,12 @@ class Nation(Base):
     flag: Mapped[str] = mapped_column(String, nullable=True) # link to flag, will be implemented later
     
     # Commodities
-    money: Mapped[int] = mapped_column(Integer, default=0)
-    food: Mapped[int] = mapped_column(Integer, default=0)
-    power: Mapped[int] = mapped_column(Integer, default=0)
-    building_materials: Mapped[int] = mapped_column(Integer, default=0)
-    metal: Mapped[int] = mapped_column(Integer, default=0)
-    consumer_goods: Mapped[int] = mapped_column(Integer, default=0)
+    money: Mapped[int] = mapped_column(Integer, default=100_000)
+    food: Mapped[int] = mapped_column(Integer, default=100_000)
+    power: Mapped[int] = mapped_column(Integer, default=10_000)
+    building_materials: Mapped[int] = mapped_column(Integer, default=1_000)
+    metal: Mapped[int] = mapped_column(Integer, default=1_000)
+    consumer_goods: Mapped[int] = mapped_column(Integer, default=10_000)
 
     # Factories
     factories = relationship("FactoryType", secondary=nation_factory_association)

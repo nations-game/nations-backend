@@ -47,7 +47,7 @@ def signup():
 
         return jsonify({
             "status": "success",
-            "details": user,
+            "details": user.to_dict(),
             "token": token
         }), 200
     else:

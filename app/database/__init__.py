@@ -73,7 +73,8 @@ class Database:
             return "Unknown error. Try again later."
         
 
-        self.add_factory_to_nation(nation_id=nation.id, factory_id=1)
+        self.add_factory_to_nation(nation_id=nation.id, factory_id=1, quantity=5)
+        self.add_factory_to_nation(nation_id=nation.id, factory_id=2, quantity=5)
         return nation
     
     def get_user_by_id(self, user_id: int) -> User:
@@ -109,21 +110,14 @@ class Database:
             self.session.rollback()
         return user
 
+    # So this prevents a nation from having more than one factory.
+    # This needs to be addressed, likely with another DB table.
     def add_factory_to_nation(self, nation_id: int, factory_id: int, quantity: int = 1) -> Nation:
         nation = self.get_nation_by_id(nation_id)
         factory = self.get_factory_type_by_id(factory_id)
         
-        if factory in nation.factories:
-            nation_factory = self.session.query(nation_factory_association).filter_by(
-                nation_id=nation.id, factory_id=factory.id
-            ).first()
-            nation_factory.quantity += quantity
-        else:
+        for _ in range(quantity):
             nation.factories.append(factory)
-            nation_factory = self.session.query(nation_factory_association).filter_by(
-                nation_id=nation.id, factory_id=factory.id
-            ).first()
-            # nation_factory.quantity = quantity
 
         self.session.commit()
         return nation
@@ -140,6 +134,9 @@ class Database:
     def get_nation_factories(self, nation_id: int) -> list:
         nation = self.get_nation_by_id(nation_id)
         return nation.factories
+    
+    def get_all_nations(self) -> list:
+        return self.session.query(Nation).all()
     
     def shutdown(self) -> None:
         self.session.close_all()
