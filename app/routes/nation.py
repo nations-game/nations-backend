@@ -7,11 +7,11 @@ nation_endpoints: Blueprint = Blueprint(
 )
 
 # TODO: Creates a nation. Sets a name, flag, etc.
-@nation_endpoints.route("/create")
+@nation_endpoints.route("/create", methods=["POST"])
 async def create():
     ...
 
 # TODO: Returns data of specified nation, or of nation belonging to logged in user.
-@nation_endpoints.route("/nation_data")
+@nation_endpoints.route("/nation_data", methods=["GET"])
 async def nation_data():
     ...

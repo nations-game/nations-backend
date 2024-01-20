@@ -6,11 +6,18 @@ user_endpoints: Blueprint = Blueprint(
     url_prefix="/user"
 )
 
-@user_endpoints.route("/signup")
+# TODO: Create a user account.
+@user_endpoints.route("/signup", methods=["POST"])
 async def signup():
     data: Request = request.data
     ...
 
-@user_endpoints.route("/login")
+# TODO: Log in.
+@user_endpoints.route("/login", methods=["POST"])
 async def login():
+    ...
+
+# TODO: Returns data about a specified user, or if none is specified, the current logged-in user. Requires authorization.
+@user_endpoints.route("/user_data", methods=["GET"])
+async def user_data():
     ...
