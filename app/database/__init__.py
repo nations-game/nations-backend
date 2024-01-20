@@ -2,7 +2,7 @@ from sqlalchemy import Select, Update, update, select
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.exc import IntegrityError
 
-from .models import Base, Nation, User
+from .models import Base, Nation, User, FactoryType
 from ..utils.security import hash_password
 
 from datetime import datetime, timedelta
@@ -18,6 +18,7 @@ class Database:
             self.engine,
         )()
         asyncio.run(self.init_models())
+        asyncio.run(self.create_factory_types())
 
     async def init_models(self) -> None:
         async with self.engine.begin() as conn:
@@ -111,6 +112,15 @@ class Database:
         except Exception:
             await self.session.rollback()
         return None
+    
+    async def create_factory_types(self) -> None:
+        farm = FactoryType(name="Farm", commodity="food")
+        clothes_factory = FactoryType(name="Clothes Factory", commodity="consumer_goods")
+
+        self.session.add(farm)
+        self.session.add(clothes_factory)
+        await self.session.flush()
+        await self.session.commit()
     
     async def shutdown(self) -> None:
         await self.session.close_all()

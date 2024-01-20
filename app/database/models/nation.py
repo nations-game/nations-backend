@@ -14,7 +14,7 @@ class Nation(Base):
     name: Mapped[str] = mapped_column(String(50), unique=True)
     system: Mapped[int] = mapped_column(Integer) # 0 = capitalism, 1 = socialism, 2 = dictatorship
     population: Mapped[int] = mapped_column(Integer, default=50_000)
-    happiness: Mapped[int] = mapped_column(Integer, min=0, max=100, default=75)
+    happiness: Mapped[int] = mapped_column(Integer, default=75) # min 0, max 100
     flag: Mapped[str] = mapped_column(String, nullable=True) # link to flag, will be implemented later
     
     # Commodities
