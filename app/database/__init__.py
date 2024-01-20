@@ -20,7 +20,7 @@ class DataBase:
         await self.session.commit()
     
     async def get_user(self, email: str) -> any:
-        statement: Select = select(User)
+        statement: Select = select(User).where(User.email == email)
     
     async def shutdown(self) -> None:
         await self.session.close_all()

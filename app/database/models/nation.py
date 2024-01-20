@@ -1,3 +1,5 @@
+from enum import Enum
+
 from sqlalchemy import Integer, String, Column
 from sqlalchemy.orm import Mapped, relationship
 
@@ -20,3 +22,9 @@ class Nation(Base):
     power: Mapped[int] = Column(Integer)
     building__materials: Mapped[int] = Column(Integer)
     metal: Mapped[int] = Column(Integer)
+
+
+class NationSystem(Enum):
+    CAPITALISM = 0
+    SOCIALISM = 1
+    DICTATORSHIP = 2

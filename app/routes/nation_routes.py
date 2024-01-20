@@ -12,6 +12,6 @@ async def create():
     ...
 
 # TODO: Returns data of specified nation, or of nation belonging to logged in user.
-@nation_endpoints.route("/nation_data", methods=["GET"])
+@nation_endpoints.route("/info", methods=["GET"])
 async def nation_data():
     ...

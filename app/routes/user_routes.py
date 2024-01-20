@@ -18,6 +18,6 @@ async def login():
     ...
 
 # TODO: Returns data about a specified user, or if none is specified, the current logged-in user. Requires authorization.
-@user_endpoints.route("/user_data", methods=["GET"])
+@user_endpoints.route("/info", methods=["GET"])
 async def user_data():
     ...
