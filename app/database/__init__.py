@@ -13,14 +13,18 @@ class DataBase:
         self.session = async_sessionmaker(
             self.engine, 
         )()
-    
+        
     async def give_income(self, income: int) -> None:
-        statement: Update = update(Nation).values(balance=Nation.balance + income)
+        statement: Update = update(Nation).values(balance=Nation.money + income)
+
         await self.session.execute(statement)
         await self.session.commit()
     
     async def get_user(self, email: str) -> any:
         statement: Select = select(User).where(User.email == email)
+
+        user = await self.session.execute(statement)
+        ...
     
     async def shutdown(self) -> None:
         await self.session.close_all()
