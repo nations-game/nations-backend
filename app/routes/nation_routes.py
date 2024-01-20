@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, request, jsonify
 
 nation_endpoints: Blueprint = Blueprint(
     name="nation_endpoints", 

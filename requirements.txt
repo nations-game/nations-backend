@@ -1,3 +1,5 @@
 flask[async]
 sqlalchemy[asyncio]
 Flask-APScheduler
+aiosqlite
+pyjwt

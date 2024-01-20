@@ -1,16 +1,32 @@
-from sqlalchemy import Integer, String, Column
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy import Integer, String, UniqueConstraint, ForeignKey
+from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 from .base import Base
-from .nation import Nation
-
 
 class User(Base):
-    __table__ = "users"
+    __tablename__  = "users"
+    __table_args__ = (
+        UniqueConstraint("username"),
+        UniqueConstraint("email"),
+    )
     
-    id: Mapped[int] = Column(Integer, primary_key=True)
-    username: Mapped[str] = Column(String)
-    hashed: Mapped[str] = Column(String)
-    salt: Mapped[str] = Column(String)
-    email: Mapped[str] = Column(String)
-    nation: Mapped["Nation"] = relationship(back_populates="leader")
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    # Basic account info
+    username: Mapped[str] = mapped_column(String(24), unique=True)
+    email: Mapped[str] = mapped_column(String(100), unique=True)
+
+    # Password info
+    hashed_password: Mapped[str] = mapped_column(String(100))
+    salted_password: Mapped[str] = mapped_column(String(100))
+
+    # Nation info
+    nation_id: Mapped[int] = mapped_column(Integer, ForeignKey("nations.id"), nullable=True)
+    nation_obj = relationship("Nation", backref="leader", foreign_keys="User.nation_id")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+        }
