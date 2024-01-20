@@ -42,7 +42,7 @@ async def create():
     if  isinstance(nation, Nation):
         return jsonify({
             "status": "success",
-            "details": nation.to_dict()
+            #"details": nation.to_dict()
         }), 200
     else:
         return jsonify({
