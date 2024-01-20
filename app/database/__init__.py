@@ -60,6 +60,33 @@ class Database:
             return "Unknown error. Try again later."
         return user
     
+    async def create_nation(self, user: User, name: str, system: int) -> Nation:
+        if user.nation_id != None:
+            return "User already has a nation."
+        
+        nation = Nation(
+            name=name,
+            system=system,
+            leader_id=user.id
+        )
+        try:
+            self.session.add(nation)
+            await self.session.commit()
+            await self.session.refresh(nation)
+        except IntegrityError as e:
+            print(e)
+            await self.session.rollback()
+            error_message = str(e)
+            if "UNIQUE constraint failed" in error_message:
+                return "There is already a nation with that name!"
+            else:
+                return "Unknown database integrity error. Try again later."
+        except Exception as ex:
+            print(ex)
+            await self.session.rollback()
+            return "Unknown error. Try again later."
+        return nation
+    
     async def get_user_by_id(self, user_id: int) -> User:
         try:
             result = await self.session.execute(select(User).where(User.id == user_id))

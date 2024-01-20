@@ -11,19 +11,34 @@ class Nation(Base):
     
     # Basic info
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(50))
+    name: Mapped[str] = mapped_column(String(50), unique=True)
     system: Mapped[int] = mapped_column(Integer) # 0 = capitalism, 1 = socialism, 2 = dictatorship
     
     # Commodities
-    money: Mapped[int] = mapped_column(Integer)
-    food: Mapped[int] = mapped_column(Integer)
-    power: Mapped[int] = mapped_column(Integer)
-    building__materials: Mapped[int] = mapped_column(Integer)
-    metal: Mapped[int] = mapped_column(Integer)
+    money: Mapped[int] = mapped_column(Integer, default=0)
+    food: Mapped[int] = mapped_column(Integer, default=0)
+    power: Mapped[int] = mapped_column(Integer, default=0)
+    building_materials: Mapped[int] = mapped_column(Integer, default=0)
+    metal: Mapped[int] = mapped_column(Integer, default=0)
 
     # Leader info
     leader_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
     leader_user = relationship("User", backref="nation", foreign_keys="Nation.leader_id")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "system": self.system,
+            "leader_id": self.leader_id,
+
+            # Commodities
+            "money": self.money,
+            "food": self.food,
+            "power": self.power,
+            "building_materials": self.building_materials,
+            "metal": self.metal
+        }
 
 
 class NationSystem(Enum):

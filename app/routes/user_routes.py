@@ -88,11 +88,15 @@ async def user_data():
         return jsonify({"status": "error", "details": "Authorization token missing"}), 401
 
     user_id = decode_jwt_token(token)
-    print(user_id)
+
+    if request.get_json().get("user_id") != None:
+        user_id = request.get_json().get("user_id")
 
     if user_id is not None:
         user = await database.get_user_by_id(user_id)
         if user:
+            user_details = user.to_dict()
+            del user_details["email"]
             return jsonify({
                 "status": "success",
                 "details": user.to_dict()
