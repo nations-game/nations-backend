@@ -29,4 +29,5 @@ class User(Base):
             "id": self.id,
             "username": self.username,
             "email": self.email,
+            "nation_id": self.nation_id
         }

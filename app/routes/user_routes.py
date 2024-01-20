@@ -99,6 +99,6 @@ async def user_data():
             del user_details["email"]
             return jsonify({
                 "status": "success",
-                "details": user.to_dict()
+                "details": user_details
             })
     return jsonify({"status": "error", "details": "Invalid or expired token"}), 401

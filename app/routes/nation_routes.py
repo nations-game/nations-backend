@@ -53,4 +53,31 @@ async def create():
 # TODO: Returns data of specified nation, or of nation belonging to logged in user.
 @nation_endpoints.route("/info", methods=["GET"])
 async def nation_data():
-    ...
+    token = request.headers.get("Authorization")
+
+    if not token:
+        return jsonify({"status": "error", "details": "Authorization token missing"}), 401
+
+    nation_id: int
+
+    if request.get_json().get("nation_id") != None:
+        nation_id = request.get_json().get("nation_id")
+    else:
+        user_id = decode_jwt_token(token)
+        user = await database.get_user_by_id(user_id)
+
+        if user is not None:
+            if user.nation_id is None:
+                return jsonify({"status": "error", "details": "User does not have a nation."}), 401
+            nation_id = user.nation_id
+        else:
+            return jsonify({"status": "error", "details": "Bad authorization token."}), 401
+
+    if nation_id is not None:
+        nation = await database.get_nation_by_id(nation_id)
+        if nation:
+            return jsonify({
+                "status": "success",
+                "details": nation.to_dict()
+            })
+    return jsonify({"status": "error", "details": "Invalid or expired token"}), 401
