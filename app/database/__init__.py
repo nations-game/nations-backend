@@ -1,38 +1,23 @@
-from sqlalchemy import Select, Update, update, select
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy import Select, Update, update, select, create_engine
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 
-from .models import Base, Nation, User, FactoryType
+from .models import Base, Nation, User, FactoryType, nation_factory_association
 from ..utils.security import hash_password
 
-from datetime import datetime, timedelta
-import asyncio
-
-DATABASE_URI = "sqlite+aiosqlite:///db.sqlite"
+DATABASE_URI = "sqlite:///db.sqlite"
 
 class Database:
     def __init__(self) -> None:
-        self.engine = create_async_engine(DATABASE_URI)
+        self.engine = create_engine(DATABASE_URI)
         self.connection = self.engine.connect()
-        self.session = async_sessionmaker(
+        Base.metadata.create_all(self.engine)
+        self.session = sessionmaker(
             self.engine,
         )()
-        asyncio.run(self.init_models())
-        asyncio.run(self.create_factory_types())
-
-    async def init_models(self) -> None:
-        async with self.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
-            await conn.run_sync(Base.metadata.create_all)
+        self.create_factory_types()
         
-    async def give_income(self, income: int) -> None:
-        try:
-            await self.session.execute(update(Nation).values(balance=Nation.money + income))
-            await self.session.commit()
-        except:
-            self.session.rollback()
-
-    async def create_user_account(self, username: str, email: str, password: str) -> User:
+    def create_user_account(self, username: str, email: str, password: str) -> User:
         hashed_password, salted_password = hash_password(password)
         user = User(
             username=username,
@@ -42,11 +27,10 @@ class Database:
         )
         try:
             self.session.add(user)
-            await self.session.commit()
-            await self.session.refresh(user)
+            self.session.commit()
         except IntegrityError as e:
             print(e)
-            await self.session.rollback()
+            self.session.rollback()
             error_message = str(e)
             if "UNIQUE constraint failed" in error_message:
                 if "users.email" in error_message:
@@ -57,11 +41,11 @@ class Database:
                 return "Unknown database integrity error. Try again later."
         except Exception as ex:
             print(ex)
-            await self.session.rollback()
+            self.session.rollback()
             return "Unknown error. Try again later."
         return user
     
-    async def create_nation(self, user: User, name: str, system: int) -> Nation:
+    def create_nation(self, user: User, name: str, system: int) -> Nation:
         if user.nation_id != None:
             return "User already has a nation."
         
@@ -72,12 +56,12 @@ class Database:
         )
         try:
             self.session.add(nation)
-            await self.session.flush()
+            self.session.flush()
             user.nation_id = nation.id
-            await self.session.commit()
+            self.session.commit()
         except IntegrityError as e:
             print(e)
-            await self.session.rollback()
+            self.session.rollback()
             error_message = str(e)
             if "UNIQUE constraint failed" in error_message:
                 return "There is already a nation with that name!"
@@ -85,46 +69,81 @@ class Database:
                 return "Unknown database integrity error. Try again later."
         except Exception as ex:
             print(ex)
-            await self.session.rollback()
+            self.session.rollback()
             return "Unknown error. Try again later."
+        
+
+        self.add_factory_to_nation(nation_id=nation.id, factory_id=1)
         return nation
     
-    async def get_user_by_id(self, user_id: int) -> User:
+    def get_user_by_id(self, user_id: int) -> User:
         try:
-            result = await self.session.execute(select(User).where(User.id == user_id))
-            user = result.scalar()
+            user = self.session.query(User).filter(User.id == user_id).first()
             assert user != None
-            return user
         except:
-            await self.session.rollback()
-        return None
+            self.session.rollback()
+        return user
     
-    async def get_user_by_email(self, email: str) -> User:
+    def get_user_by_email(self, email: str) -> User:
         try:
-            result = await self.session.execute(select(User).where(User.email == email))
-            user = result.scalar()
-
+            user = self.session.query(User).filter(User.email == email).first()
             assert user != None
-            return user
-        except IntegrityError as e:
-            await self.session.rollback()
-            raise e
-        except Exception:
-            await self.session.rollback()
-        return None
+        except:
+            self.session.rollback()
+        return user
     
-    async def create_factory_types(self) -> None:
+    def create_factory_types(self) -> None:
         farm = FactoryType(name="Farm", commodity="food")
         clothes_factory = FactoryType(name="Clothes Factory", commodity="consumer_goods")
 
         self.session.add(farm)
         self.session.add(clothes_factory)
-        await self.session.flush()
-        await self.session.commit()
+        self.session.flush()
+        self.session.commit()
+
+    def get_factory_type_by_id(self, factory_id: int) -> FactoryType:
+        try:
+            user = self.session.query(FactoryType).filter(FactoryType.id == factory_id).first()
+            assert user != None
+        except:
+            self.session.rollback()
+        return user
+
+    def add_factory_to_nation(self, nation_id: int, factory_id: int, quantity: int = 1) -> Nation:
+        nation = self.get_nation_by_id(nation_id)
+        factory = self.get_factory_type_by_id(factory_id)
+        
+        if factory in nation.factories:
+            nation_factory = self.session.query(nation_factory_association).filter_by(
+                nation_id=nation.id, factory_id=factory.id
+            ).first()
+            nation_factory.quantity += quantity
+        else:
+            nation.factories.append(factory)
+            nation_factory = self.session.query(nation_factory_association).filter_by(
+                nation_id=nation.id, factory_id=factory.id
+            ).first()
+            # nation_factory.quantity = quantity
+
+        self.session.commit()
+        return nation
+
     
-    async def shutdown(self) -> None:
-        await self.session.close_all()
-        await self.engine.dispose()
+    def get_nation_by_id(self, nation_id: int) -> Nation:
+        try:
+            nation = self.session.query(Nation).filter(Nation.id == nation_id).first()
+            assert nation != None
+        except:
+            self.session.rollback()
+        return nation
+
+    def get_nation_factories(self, nation_id: int) -> list:
+        nation = self.get_nation_by_id(nation_id)
+        return nation.factories
+    
+    def shutdown(self) -> None:
+        self.session.close_all()
+        self.engine.dispose()
 
 
 database_instance = Database()

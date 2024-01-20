@@ -12,7 +12,7 @@ nation_endpoints: Blueprint = Blueprint(
 
 # TODO: Creates a nation. Sets a name, flag, etc.
 @nation_endpoints.route("/create", methods=["POST"])
-async def create():
+def create():
     token = request.headers.get("Authorization")
 
     if not token:
@@ -21,7 +21,7 @@ async def create():
     user_id = decode_jwt_token(token)
     user: User
     if user_id is not None:
-        user = await database.get_user_by_id(user_id)
+        user = database.get_user_by_id(user_id)
     else:
         return jsonify({"status": "error", "details": "Bad authorization token."}), 401
     
@@ -33,7 +33,7 @@ async def create():
     name = request_data.get("name")
     system = request_data.get("system")
     
-    nation = await database.create_nation(
+    nation = database.create_nation(
         user=user,
         name=name,
         system=system
@@ -50,9 +50,9 @@ async def create():
             "details": nation
         }), 400
 
-# TODO: Returns data of specified nation, or of nation belonging to logged in user.
+# Returns data of nation belonging to logged in user.
 @nation_endpoints.route("/info", methods=["GET"])
-async def nation_data():
+def nation_data():
     token = request.headers.get("Authorization")
 
     if not token:
@@ -64,7 +64,7 @@ async def nation_data():
         nation_id = request.get_json().get("nation_id")
     else:
         user_id = decode_jwt_token(token)
-        user = await database.get_user_by_id(user_id)
+        user = database.get_user_by_id(user_id)
 
         if user is not None:
             if user.nation_id is None:
@@ -74,10 +74,35 @@ async def nation_data():
             return jsonify({"status": "error", "details": "Bad authorization token."}), 401
 
     if nation_id is not None:
-        nation = await database.get_nation_by_id(nation_id)
+        nation = database.get_nation_by_id(nation_id)
         if nation:
             return jsonify({
                 "status": "success",
-                "details": nation.to_dict()
+                "details": nation
             })
     return jsonify({"status": "error", "details": "Invalid or expired token"}), 401
+
+# Get the factories of the logged-in user's nation.
+@nation_endpoints.route("/factories", methods=["GET"])
+def get_factories():
+    token = request.headers.get("Authorization")
+
+    if not token:
+        return jsonify({"status": "error", "details": "Authorization token missing"}), 401
+
+    nation_id: int
+
+    user_id = decode_jwt_token(token)
+    user = database.get_user_by_id(user_id)
+
+    if user is not None:
+        if user.nation_id is None:
+            return jsonify({"status": "error", "details": "User does not have a nation."}), 401
+        nation_id = user.nation_id
+    else:
+        return jsonify({"status": "error", "details": "Bad authorization token."}), 401
+
+    if nation_id is not None:
+        factories = database.get_nation_factories(nation_id)
+        print(factories)
+        return jsonify(factories)

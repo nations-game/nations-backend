@@ -27,7 +27,7 @@ class FlaskServer:
     
     def run_app(self) -> None:
         self._register_blueprints()
-        self.app.run()
+        self.app.run(debug=True)
 
 
 flask_server: FlaskServer = FlaskServer()

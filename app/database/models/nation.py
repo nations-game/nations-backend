@@ -1,11 +1,21 @@
 from enum import Enum
 
-from sqlalchemy import Integer, String, ForeignKey
+from sqlalchemy import Integer, String, ForeignKey, Column, Table
 from sqlalchemy.orm import Mapped, relationship, mapped_column
+
+from dataclasses import dataclass
 
 from .base import Base
 
+nation_factory_association = Table(
+    "nation_factory_association",
+    Base.metadata,
+    Column("nation_id", Integer, ForeignKey("nations.id")),
+    Column("factory_id", Integer, ForeignKey("factory_types.id")),
+    Column("quantity", Integer, default=0),
+)
 
+@dataclass
 class Nation(Base):
     __tablename__  = "nations"
     
@@ -24,6 +34,9 @@ class Nation(Base):
     building_materials: Mapped[int] = mapped_column(Integer, default=0)
     metal: Mapped[int] = mapped_column(Integer, default=0)
     consumer_goods: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Factories
+    factories = relationship("FactoryType", secondary=nation_factory_association)
 
     # Leader info
     leader_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))

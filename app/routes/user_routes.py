@@ -11,10 +11,9 @@ user_endpoints: Blueprint = Blueprint(
     url_prefix="/user"
 )
 
-
 # TODO: Create a user account.
 @user_endpoints.route("/signup", methods=["POST"])
-async def signup():
+def signup():
     # Get the data of the request
     register_data: dict = request.get_json()
 
@@ -37,7 +36,7 @@ async def signup():
         }), 401
 
     
-    user = await database.create_user_account(
+    user = database.create_user_account(
         username=username,
         email=email,
         password=password
@@ -48,7 +47,7 @@ async def signup():
 
         return jsonify({
             "status": "success",
-            "details": user.to_dict(),
+            "details": user,
             "token": token
         }), 200
     else:
@@ -59,18 +58,18 @@ async def signup():
 
 # TODO: Log in.
 @user_endpoints.route("/login", methods=["POST"])
-async def login():
+def login():
     login_data: dict = request.get_json()
     email = login_data.get("email")
     password = login_data.get("password")
 
-    user = await database.get_user_by_email(email)
+    user = database.get_user_by_email(email)
 
     if user and verify_password(password, user.salted_password, user.hashed_password):
         token = create_jwt_token(user.id)
         return jsonify({
             "status": "success",
-            "details": user.to_dict(),
+            "details": user,
             "token": token
         })
     else:
@@ -81,7 +80,7 @@ async def login():
 
 # TODO: Returns data about a specified user, or if none is specified, the current logged-in user. Requires authorization.
 @user_endpoints.route("/info", methods=["GET"])
-async def user_data():
+def user_data():
     token = request.headers.get("Authorization")
 
     if not token:
@@ -93,7 +92,7 @@ async def user_data():
         user_id = request.get_json().get("user_id")
 
     if user_id is not None:
-        user = await database.get_user_by_id(user_id)
+        user = database.get_user_by_id(user_id)
         if user:
             user_details = user.to_dict()
             del user_details["email"]

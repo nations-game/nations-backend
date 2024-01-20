@@ -1,8 +1,11 @@
 from sqlalchemy import Integer, String, UniqueConstraint, ForeignKey
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
+from dataclasses import dataclass
+
 from .base import Base
 
+@dataclass
 class User(Base):
     __tablename__  = "users"
     __table_args__ = (

@@ -1,10 +1,13 @@
 from sqlalchemy import Integer, String, Float
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
+from dataclasses import dataclass
+
 from .base import Base
 
 # Production calculation:
 # production * (current level * level multiplier)
+@dataclass
 class FactoryType(Base):
     __tablename__  = "factory_types"
 
@@ -13,4 +16,16 @@ class FactoryType(Base):
     commodity: Mapped[str] = mapped_column(String(24))
     production: Mapped[int] = mapped_column(Integer, default=5)
     max_level: Mapped[int] = mapped_column(Integer, default=5)
-    level_multiplier: Mapped[float] = mapped_column(Float, default=1) # min 0.1, max 2
+    current_level: Mapped[float] = mapped_column(Integer, default=1)
+
+    """
+    def __dict__(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "commodity": self.commodity,
+            "production": self.production,
+            "max_level": self.max_level,
+            "current_level": self.current_level
+        }
+    """
