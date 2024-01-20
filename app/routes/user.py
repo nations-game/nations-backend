@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, Request, request
 
 user_endpoints: Blueprint = Blueprint(
     name="user_endpoints", 
@@ -8,6 +8,7 @@ user_endpoints: Blueprint = Blueprint(
 
 @user_endpoints.route("/signup")
 async def signup():
+    data: Request = request.data
     ...
 
 @user_endpoints.route("/login")
