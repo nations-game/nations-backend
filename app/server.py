@@ -1,5 +1,6 @@
 from flask import Flask
 
+from .database import Database, database_instance
 from .tasks import TaskHandler
 from .routes import (
     user_endpoints,
@@ -20,6 +21,7 @@ class FlaskServer:
         self.app.config.from_object(FlaskConfig())
 
         self.task_handler = TaskHandler(flask_app=self.app)
+        self.database: Database = database_instance
 
     def _register_blueprints(self):
         for blueprint in BLUEPRINTS:
@@ -28,6 +30,9 @@ class FlaskServer:
     def run_app(self) -> None:
         self._register_blueprints()
         self.app.run()
+
+    def get_database(self) -> Database:
+        return self.database
 
 
 flask_server: FlaskServer = FlaskServer()

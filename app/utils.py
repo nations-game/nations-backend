@@ -13,3 +13,4 @@ def check_password(password: str, salt: bytes, user_hash: bytes) -> bool:
     password_bytes: bytes = password.encode()
     
     return user_hash == hashlib.pbkdf2_hmac("sha256", password_bytes, salt, 100_000)
+
