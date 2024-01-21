@@ -2,7 +2,7 @@ from flask_apscheduler import APScheduler
 from flask import Flask
 
 from .database import database_instance as database
-from .database.models import Nation, FactoryType
+from .database.models import Nation, FactoryType, NationFactory
 
 class TaskHandler:
     def __init__(self, flask_app: Flask) -> None:
@@ -24,25 +24,18 @@ class TaskHandler:
                 # Increase population by 5% each tick
                 nation.population *= 1.05
 
-                nation.happiness = 100
-
-                if nation.consumer_goods < 0:
-                    nation.happiness -= 20
-
-                if nation.food < 0:
-                    nation.happiness = 0
-
-                # Increase money from taxes, 10 money from each member of population * 0.7
-                nation.money += 10 * (nation.population * 0.7 * (nation.happiness / 100))
-
-                factory: FactoryType
+                factory: NationFactory
                 for factory in nation.factories:
-                    match factory.commodity:
+                    factory_type = database.get_factory_type_by_id(factory.factory_id)
+                    match factory_type.commodity:
                         case "food":
-                            nation.food += factory.production * factory.current_level
+                            nation.food += factory_type.production * factory_type.current_level
                             break
                         case "consumer_goods":
-                            nation.consumer_goods += factory.production * factory.current_level
+                            nation.consumer_goods += factory_type.production * factory_type.current_level
+                            break
+                        case "power":
+                            nation.consumer_goods += factory_type.production * factory_type.current_level
                             break
                 
                 # Decrease food, power, and consumer goods according to population
@@ -53,6 +46,28 @@ class TaskHandler:
                 nation.food = max(nation.food, 0)
                 nation.power = max(nation.power, 0)
                 nation.consumer_goods = max(nation.consumer_goods, 0)
+
+                nation.happiness = 50
+
+                if nation.consumer_goods % nation.population > 0:
+                    nation.happiness *= 1.15
+                
+                if nation.power % nation.population > 0:
+                    nation.happiness *= 1.20
+
+                if nation.food <= 0:
+                    nation.happiness = 0
+
+                # Taxes
+                # Base tax is calculated by diving population by 1000 so that there will almost always be an okay amount
+                base_tax = nation.population / 1000
+                
+                # Happiness tax is the tax paid when citizens are happy. :)
+                happiness_tax = nation.happiness * 10
+
+                nation.money += base_tax + happiness_tax
+
+
             
 
             database.session.commit()

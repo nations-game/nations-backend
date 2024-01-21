@@ -104,5 +104,4 @@ def get_factories():
 
     if nation_id is not None:
         factories = database.get_nation_factories(nation_id)
-        print(factories)
         return jsonify(factories)

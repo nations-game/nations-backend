@@ -2,7 +2,7 @@ from sqlalchemy import Select, Update, update, select, create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 
-from .models import Base, Nation, User, FactoryType, nation_factory_association
+from .models import Base, Nation, User, FactoryType, NationFactory
 from ..utils.security import hash_password
 
 DATABASE_URI = "sqlite:///db.sqlite"
@@ -73,8 +73,10 @@ class Database:
             return "Unknown error. Try again later."
         
 
-        self.add_factory_to_nation(nation_id=nation.id, factory_id=1, quantity=5)
-        self.add_factory_to_nation(nation_id=nation.id, factory_id=2, quantity=5)
+        for _ in range(4):
+            self.add_factory_to_nation(nation_id=nation.id, factory_id=1)
+            self.add_factory_to_nation(nation_id=nation.id, factory_id=2)
+            self.add_factory_to_nation(nation_id=nation.id, factory_id=3)
         return nation
     
     def get_user_by_id(self, user_id: int) -> User:
@@ -96,9 +98,11 @@ class Database:
     def create_factory_types(self) -> None:
         farm = FactoryType(name="Farm", commodity="food")
         clothes_factory = FactoryType(name="Clothes Factory", commodity="consumer_goods")
+        hydro_power_plant = FactoryType(name="Hydro Power Plant", commodity="power")
 
         self.session.add(farm)
         self.session.add(clothes_factory)
+        self.session.add(hydro_power_plant)
         self.session.flush()
         self.session.commit()
 
@@ -112,12 +116,16 @@ class Database:
 
     # So this prevents a nation from having more than one factory.
     # This needs to be addressed, likely with another DB table.
-    def add_factory_to_nation(self, nation_id: int, factory_id: int, quantity: int = 1) -> Nation:
+    def add_factory_to_nation(self, nation_id: int, factory_id: int) -> Nation:
         nation = self.get_nation_by_id(nation_id)
         factory = self.get_factory_type_by_id(factory_id)
+
+        nation_factory = NationFactory(
+            nation_id=nation_id,
+            factory_id=factory_id
+        )
         
-        for _ in range(quantity):
-            nation.factories.append(factory)
+        nation.factories.append(nation_factory)
 
         self.session.commit()
         return nation
@@ -133,10 +141,23 @@ class Database:
 
     def get_nation_factories(self, nation_id: int) -> list:
         nation = self.get_nation_by_id(nation_id)
-        return nation.factories
+        factory_types = []
+
+        nation_factory: NationFactory
+        for nation_factory in nation.factories:
+            factory_types.append(self.get_factory_type_by_id(nation_factory.factory_id))
+        return factory_types
     
     def get_all_nations(self) -> list:
         return self.session.query(Nation).all()
+    
+    def get_factory_type_by_id(self, factory_type_id: int) -> FactoryType:
+        try:
+            factory_type = self.session.query(FactoryType).filter(FactoryType.id == factory_type_id).first()
+            assert factory_type != None
+        except:
+            self.session.rollback()
+        return factory_type
     
     def shutdown(self) -> None:
         self.session.close_all()

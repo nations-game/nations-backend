@@ -1,19 +1,11 @@
 from enum import Enum
 
-from sqlalchemy import Integer, String, ForeignKey, Column, Table
+from sqlalchemy import Integer, String, ForeignKey, Float
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 from dataclasses import dataclass
 
 from .base import Base
-
-nation_factory_association = Table(
-    "nation_factory_association",
-    Base.metadata,
-    Column("nation_id", Integer, ForeignKey("nations.id")),
-    Column("factory_id", Integer, ForeignKey("factory_types.id")),
-    Column("quantity", Integer, default=1),
-)
 
 @dataclass
 class Nation(Base):
@@ -36,11 +28,14 @@ class Nation(Base):
     consumer_goods: Mapped[int] = mapped_column(Integer, default=10_000)
 
     # Factories
-    factories = relationship("FactoryType", secondary=nation_factory_association)
+    factories = relationship("NationFactory", uselist=True, backref="nations")
+
+    # Info for ticking
+    tax_rate: Mapped[float] = mapped_column(Float, default=1.0)
 
     # Leader info
     leader_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
-    leader_user = relationship("User", backref="nation", foreign_keys="Nation.leader_id")
+    leader_user = relationship("User", backref="nations", foreign_keys="Nation.leader_id")
 
     def to_dict(self):
         return {
