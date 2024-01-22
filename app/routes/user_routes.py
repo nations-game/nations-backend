@@ -11,7 +11,6 @@ user_endpoints: Blueprint = Blueprint(
     url_prefix="/user"
 )
 
-# TODO: Create a user account.
 @user_endpoints.route("/signup", methods=["POST"])
 def signup():
     # Get the data of the request
@@ -56,7 +55,6 @@ def signup():
             "details": user
         }), 400
 
-# TODO: Log in.
 @user_endpoints.route("/login", methods=["POST"])
 def login():
     login_data: dict = request.get_json()
@@ -65,18 +63,20 @@ def login():
 
     user = database.get_user_by_email(email)
 
-    if user and verify_password(password, user.salted_password, user.hashed_password):
-        token = create_jwt_token(user.id)
-        return jsonify({
-            "status": "success",
-            "details": user,
-            "token": token
-        })
-    else:
+    if not (user and verify_password(password, user.salted_password, user.hashed_password)):
         return jsonify({
             "status": "error",
             "details": "Invalid email or password!"
         }), 401
+    
+    token = create_jwt_token(user.id)
+    
+    return jsonify({
+        "status": "success",
+        "details": user,
+        "token": token
+    })
+        
 
 # TODO: Returns data about a specified user, or if none is specified, the current logged-in user. Requires authorization.
 @user_endpoints.route("/info", methods=["GET"])

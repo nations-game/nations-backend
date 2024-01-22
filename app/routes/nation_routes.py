@@ -10,9 +10,25 @@ nation_endpoints: Blueprint = Blueprint(
     url_prefix="/nation"
 )
 
-# TODO: Creates a nation. Sets a name, flag, etc.
 @nation_endpoints.route("/create", methods=["POST"])
 def create():
+    """
+    Creates a new nation linked to the authorized account
+
+    Headers:
+        Authorization `str`: The jwt for the user.
+
+    JSON:
+        name `str`: The name of the nation.
+        system `int`: The system used in the nation. View `NationTypes`
+    
+    Response JSON:
+        status `str`: "error" or "success"
+        details `str | dict`:
+            If `status` is "error", it's the reason for the error as a `str`.
+            Otherwise, it's' the nations information as a `dict`.
+    """
+    
     token = request.headers.get("Authorization")
 
     if not token:
@@ -20,18 +36,19 @@ def create():
 
     user_id = decode_jwt_token(token)
     user: User
-    if user_id is not None:
-        user = database.get_user_by_id(user_id)
-    else:
+    
+    if user_id is None:
         return jsonify({"status": "error", "details": "Bad authorization token."}), 401
+    
+    user = database.get_user_by_id(user_id)
     
     if user.nation_id != None:
         return jsonify({"status": "error", "details": "User already has a nation."}), 400
     
     request_data: dict = request.get_json()
 
-    name = request_data.get("name")
-    system = request_data.get("system")
+    name: str = request_data.get("name")
+    system: int = request_data.get("system")
     
     nation = database.create_nation(
         user=user,
@@ -47,12 +64,29 @@ def create():
     else:
         return jsonify({
             "status": "error",
-            "details": nation
+            "details": "Error creating nation"
         }), 400
 
 # Returns data of nation belonging to logged in user.
 @nation_endpoints.route("/info", methods=["GET"])
 def nation_data():
+    """
+    Gets the data of a nation given an ID.
+    If a nation ID is not specified, it will default to the logged-in user's nation.
+
+    Headers:
+        Authorization `str`: The jwt for the user.
+    
+    JSON:
+        nation_id `int`: The ID of the nation, is optional.
+    
+    Response JSON:
+        status `str`: "error" or "success"
+        details `str | dict`:
+            If `status` is "error", it's the reason for the error as a `str`.
+            Otherwise, it's' the nations information as a `dict`.
+    """
+
     token = request.headers.get("Authorization")
 
     if not token:
@@ -80,11 +114,25 @@ def nation_data():
                 "status": "success",
                 "details": nation
             })
+    
     return jsonify({"status": "error", "details": "Invalid or expired token"}), 401
 
 # Get the factories of the logged-in user's nation.
 @nation_endpoints.route("/factories", methods=["GET"])
 def get_factories():
+    """
+    Gets the factories of the logged-in user's nation.
+
+    Headers:
+        Authorization `str`: The jwt for the user.
+    
+    Response JSON:
+        status `str`: "error" or "success"
+        details `str | list`:
+            If `status` is "error", it's the reason for the error as a `str`.
+            Otherwise, it's' the list of the nations factories as a `list`.
+    """
+
     token = request.headers.get("Authorization")
 
     if not token:
