@@ -18,6 +18,17 @@ class Database:
         self.create_factory_types()
         
     def create_user_account(self, username: str, email: str, password: str) -> User:
+        """
+        Creates a user account in the database.
+
+        Args:
+            username `str`: The account's username.
+            email `str`: The account's email.
+            password `str`: The password. Will be hashed and salted automatically.
+
+        Returns:
+            `User`: The newly created user account. May also return `str` if an error has occured.
+        """
         hashed_password, salted_password = hash_password(password)
         user = User(
             username=username,
@@ -46,6 +57,17 @@ class Database:
         return user
     
     def create_nation(self, user: User, name: str, system: int) -> Nation:
+        """
+        Creates a nation in the database.
+
+        Args:
+            user `User`: The account the nation belongs to.
+            name `str`: The name of the nation.
+            system `int`: The economic/government system. See `Nation` class.
+
+        Returns:
+            `Nation`: The newly created nation. May also return `str` if an error has occured.
+        """
         if user.nation_id != None:
             return "User already has a nation."
         
@@ -80,6 +102,15 @@ class Database:
         return nation
     
     def get_user_by_id(self, user_id: int) -> User:
+        """
+        Fetch a user by their ID.
+
+        Args:
+            user_id `int`: The user's ID.
+
+        Returns:
+            `User`: The user.
+        """
         try:
             user = self.session.query(User).filter(User.id == user_id).first()
             assert user != None
@@ -88,6 +119,15 @@ class Database:
         return user
     
     def get_user_by_email(self, email: str) -> User:
+        """
+        Fetch a user by their email.
+
+        Args:
+            email `str`: The user's email.
+
+        Returns:
+            `User`: The user.
+        """
         try:
             user = self.session.query(User).filter(User.email == email).first()
             assert user != None
@@ -107,6 +147,15 @@ class Database:
         self.session.commit()
 
     def get_factory_type_by_id(self, factory_id: int) -> FactoryType:
+        """
+        Fetch a factory type by its ID.
+
+        Args:
+            factory_id `id`: The factory type's ID.
+
+        Returns:
+            `FactoryType`: The factory type.
+        """
         try:
             user = self.session.query(FactoryType).filter(FactoryType.id == factory_id).first()
             assert user != None
@@ -117,8 +166,17 @@ class Database:
     # So this prevents a nation from having more than one factory.
     # This needs to be addressed, likely with another DB table.
     def add_factory_to_nation(self, nation_id: int, factory_id: int) -> Nation:
+        """
+        Add a factory to a nation.
+
+        Args:
+            nation_id `int`: The nation's ID.
+            factory_id `int`: The factory type's ID.
+
+        Returns:
+            `Nation`: The nation.
+        """
         nation = self.get_nation_by_id(nation_id)
-        factory = self.get_factory_type_by_id(factory_id)
 
         nation_factory = NationFactory(
             nation_id=nation_id,
@@ -132,6 +190,15 @@ class Database:
 
     
     def get_nation_by_id(self, nation_id: int) -> Nation:
+        """
+        Fetch a nation by its ID.
+
+        Args:
+            nation_id `int`: The nation's ID.
+
+        Returns:
+            `Nation`: The nation.
+        """
         try:
             nation = self.session.query(Nation).filter(Nation.id == nation_id).first()
             assert nation != None
@@ -140,6 +207,15 @@ class Database:
         return nation
 
     def get_nation_factories(self, nation_id: int) -> list:
+        """
+        Fetch a nation's factory by its ID.
+
+        Args:
+            nation_id `int`: The nation's ID.
+
+        Returns:
+            `list`: List of the nation's factories.
+        """
         nation = self.get_nation_by_id(nation_id)
         factory_types = []
 
@@ -149,15 +225,13 @@ class Database:
         return factory_types
     
     def get_all_nations(self) -> list:
+        """
+        Get all nations.
+
+        Returns:
+            `list`: List of every nation.
+        """
         return self.session.query(Nation).all()
-    
-    def get_factory_type_by_id(self, factory_type_id: int) -> FactoryType:
-        try:
-            factory_type = self.session.query(FactoryType).filter(FactoryType.id == factory_type_id).first()
-            assert factory_type != None
-        except:
-            self.session.rollback()
-        return factory_type
     
     def shutdown(self) -> None:
         self.session.close_all()
