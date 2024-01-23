@@ -150,9 +150,8 @@ def get_factories():
     else:
         return jsonify({"status": "error", "details": "Bad authorization token."}), 401
 
-    if nation_id is not None:
-        factories = database.get_nation_factories(nation_id)
-        return jsonify(factories)
+    factories = database.get_nation_factories(nation_id)
+    return jsonify(factories)
 
 @nation_endpoints.route('/factories/create', methods=["POST"])
 def create_factory():
