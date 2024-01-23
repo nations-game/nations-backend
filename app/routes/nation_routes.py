@@ -153,10 +153,10 @@ def get_factories():
     factories = database.get_nation_factories(nation_id)
     return jsonify(factories)
 
-@nation_endpoints.route('/factories/create', methods=["POST"])
-def create_factory():
+@nation_endpoints.route('/factories/build', methods=["POST"])
+def build_factory():
     """
-    Creates a factory if a user provides a valid jwt token and deducts money from the user nation
+    Builds a factory on a user's nation if a user provides a valid jwt token and deducts money from the user nation
     
     TODO: After land management is added, we must add a value in the JSON for the land used (most probably x1, x2, y1, y2)
 
@@ -165,7 +165,7 @@ def create_factory():
     
     JSON:
         nation_id `int`: The ID of the nation
-        factory_type `str`: The type of factory
+        factory_type `int`: The type of factory
     
     Response JSON:
         status `str`: "error" or "success"
@@ -182,12 +182,13 @@ def create_factory():
     user_id = decode_jwt_token(token)
     user = database.get_user_by_id(user_id)
 
-    if user is not None:
-        if user.nation_id is None:
-            return jsonify({"status": "error", "details": "User does not have a nation."}), 401
-        nation_id = user.nation_id
-    else:
+    if user is None:
         return jsonify({"status": "error", "details": "Bad authorization token."}), 401
+
+    if user.nation_id is None:
+        return jsonify({"status": "error", "details": "User does not have a nation."}), 401
+    
+    nation_id = user.nation_id
     
     factory_type = database.get_factory_type_by_id(factory_type_id)
     if factory_type is None:
@@ -196,4 +197,59 @@ def create_factory():
     database.add_factory_to_nation(nation_id, factory_type_id)
     return jsonify({"status": "success"})
     
+@nation_endpoints.route('/factories/collect', method=["POST"])
+def collect_from_factory():
+    """
+    Collects resources from a factory (user must be logged in), also deducts certain resources
+
+    Headers:
+        Authorization `str`: The jwt for the user.
     
+    JSON:
+        nation_id `int`: The ID of the nation
+        factory_id `int`: The ID of the factory
+    
+    Response JSON:
+        status `str`: "error" or "success"
+    """
+
+    token = request.headers.get("Authorization")
+
+    if not token:
+        return jsonify({"status": "error", "details": "Authorization token missing"}), 401
+    
+    nation_id: int
+    factory_id: int
+
+    user_id = decode_jwt_token(token)
+    user = database.get_user_by_id(user_id)
+
+    if user is None:
+        return jsonify({"status": "error", "details": "Bad authorization token."}), 401
+
+    if user.nation_id is None:
+        return jsonify({"status": "error", "details": "User does not have a nation."}), 401
+    
+    nation_id = user.nation_id
+    nation = database.get_nation_by_id(nation_id)
+
+    for factory in database.get_nation_factories(nation_id):
+        if factory.id == factory_id:
+            factory_type = database.get_factory_type_by_id(factory_id)
+            if factory.production_resources > 0:
+                match factory_type.commodity:
+                    case "food":
+                        nation.food += factory_type.production * factory_type.current_level
+                        break
+                    case "consumer_goods":
+                        nation.consumer_goods += factory_type.production * factory_type.current_level
+                        break
+                    case "power":
+                        nation.consumer_goods += factory_type.production * factory_type.current_level
+                        break
+                # TODO: Deduct certain resources
+                return jsonify({"status": "success"})
+            else:
+                return jsonify({"status": "error", "details": "Not enough resources to collect"})
+
+    return jsonify({"status": "error", "details": "Invalid factory ID"}), 400

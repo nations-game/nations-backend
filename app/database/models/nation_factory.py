@@ -14,5 +14,7 @@ class NationFactory(Base):
     nation_id: Mapped[int] = mapped_column(Integer, ForeignKey("nations.id"))
     factory_id: Mapped[int] = mapped_column(Integer, ForeignKey("factory_types.id"))
 
+    production_resources: Mapped[int] = mapped_column(Integer, ForeignKey("factory.resources"))
+
     # nation_obj = relationship("Nation", backref="nation_factories", foreign_keys="NationFactory.nation_id")
     # factory_type = relationship("FactoryType", backref="nation_factories", foreign_keys="NationFactory.factory_id")

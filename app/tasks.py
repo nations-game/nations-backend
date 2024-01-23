@@ -4,6 +4,8 @@ from flask import Flask
 from .database import database_instance as database
 from .database.models import Nation, FactoryType, NationFactory
 
+from .utils.math import clamp
+
 class TaskHandler:
     def __init__(self, flask_app: Flask) -> None:
         self.flask_app = flask_app
@@ -27,6 +29,7 @@ class TaskHandler:
                 factory: NationFactory
                 for factory in nation.factories:
                     factory_type = database.get_factory_type_by_id(factory.factory_id)
+                    '''
                     match factory_type.commodity:
                         case "food":
                             nation.food += factory_type.production * factory_type.current_level
@@ -37,6 +40,9 @@ class TaskHandler:
                         case "power":
                             nation.consumer_goods += factory_type.production * factory_type.current_level
                             break
+                    '''
+                    factory.production_resources += factory_type.production * factory_type.current_level
+                    factory.production_resources = clamp(factory.production_resources, 24, 0)
                 
                 # Decrease food, power, and consumer goods according to population
                 nation.food -= nation.population / 3
